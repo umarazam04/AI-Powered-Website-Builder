@@ -3,7 +3,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./prisma.js";
 
-const trustedOrigins = process.env.TRUSTED_ORIGINS?.split(',') || [];
+const trustedOrigins = process.env.TRUSTED_ORIGINS?.split(',').map(o => o.trim()).filter(Boolean) || [];
 
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
@@ -24,8 +24,8 @@ export const auth = betterAuth({
             name: 'auth_session',
             attributes: {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                secure: process.env.NODE_ENV?.trim() === 'production',
+                sameSite: process.env.NODE_ENV?.trim() === 'production' ? 'none' : 'lax',
                 path: '/',
             }
         }

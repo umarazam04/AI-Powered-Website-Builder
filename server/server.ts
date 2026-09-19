@@ -1,4 +1,8 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
+import dns from 'node:dns';
+
+dns.setDefaultResultOrder('ipv4first');
+
 import 'dotenv/config';
 import cors from 'cors';
 import { toNodeHandler } from 'better-auth/node';
@@ -12,7 +16,7 @@ const app = express();
 const port = 3000;
 
 const corsOptions = {
-    origin: process.env.TRUSTED_ORIGINS?.split(',') || [],
+    origin: process.env.TRUSTED_ORIGINS?.split(',').map(o => o.trim()) || [],
     credentials: true,
 }
 
@@ -29,6 +33,13 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/api/user', userRouter);
 app.use('/api/project', projectRouter);
 
+// Global error handler to prevent unhandled errors from crashing the server
+app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+    console.error('Unhandled error:', err);
+    if (!res.headersSent) {
+        res.status(500).json({ message: err.message || 'Internal Server Error' });
+    }
+});
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
